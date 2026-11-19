@@ -1,0 +1,656 @@
+<!doctype html><html lang="pt-BR"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Livro da Semana">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#131416">
+<meta name="description" content="Leia um livro por semana: o app divide a leitura em 7 dias e ajusta a meta se você atrasar.">
+</head><body>
+<title>Livro da Semana</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<style>@font-face{font-family:Figtree;font-style:normal;font-weight:400;font-display:swap;src:url(fonts/figtree-latin-400-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:500;font-display:swap;src:url(fonts/figtree-latin-500-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:600;font-display:swap;src:url(fonts/figtree-latin-600-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:700;font-display:swap;src:url(fonts/figtree-latin-700-normal.woff2) format('woff2')}@font-face{font-family:Literata;font-style:normal;font-weight:500;font-display:swap;src:url(fonts/literata-latin-500-normal.woff2) format('woff2')}@font-face{font-family:Literata;font-style:normal;font-weight:600;font-display:swap;src:url(fonts/literata-latin-600-normal.woff2) format('woff2')}
+/* Layout: one phone column built like the reading-plan app: day strip, today's task, one fixed action, then a shelf of finished books. */
+:root{
+  color-scheme:dark;
+  --bg:#131416;--surface:#222327;--raise:#2c2d32;--fg:#f2f0ec;--muted:#a3a2a6;--line:#3b3c42;
+  --cta:#efedea;--cta-fg:#17181a;--done:#9cc7ad;--warn:#e8b36a;
+  --sp1:#7f9a8c;--sp2:#b98a63;--sp3:#7d8bb0;--sp4:#ad7a86;--sp5:#a6a06a;--sp-fg:#141517;
+  --display:"Literata",Georgia,"Times New Roman",serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  color-scheme:light;
+  --bg:#f5f5f3;--surface:#e8e8e5;--raise:#dddddb;--fg:#17181a;--muted:#5f5f63;--line:#c9c9c6;
+  --cta:#1b1c1f;--cta-fg:#f5f5f3;--done:#2f7551;--warn:#9a5d0c;
+  --sp1:#6f8d7d;--sp2:#b0805a;--sp3:#6e7ea6;--sp4:#a56f7c;--sp5:#99935c;--sp-fg:#111214;
+}}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f5f5f3;--surface:#e8e8e5;--raise:#dddddb;--fg:#17181a;--muted:#5f5f63;--line:#c9c9c6;
+  --cta:#1b1c1f;--cta-fg:#f5f5f3;--done:#2f7551;--warn:#9a5d0c;
+  --sp1:#6f8d7d;--sp2:#b0805a;--sp3:#6e7ea6;--sp4:#a56f7c;--sp5:#99935c;--sp-fg:#111214;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:400 16px/1.45 var(--body);-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 128px;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.top h1{font:600 22px/1.2 var(--body);margin:0}
+.icon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;margin-right:-10px}
+.book{display:flex;flex-direction:column;gap:4px}
+.book h2{font:600 clamp(28px,8vw,36px)/1.14 var(--display);margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:15px;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:center}
+.link{color:var(--fg);text-decoration:underline;text-underline-offset:3px;font-size:15px;padding:4px 0}
+.chip{border:1px solid var(--line);border-radius:99px;padding:1px 9px;font-size:13px;color:var(--fg)}
+.strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding:4px}
+.strip::-webkit-scrollbar{display:none}
+.tile{position:relative;flex:1 0 64px;min-width:64px;height:78px;border-radius:12px;background:var(--surface);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tile b{font:500 22px/1.1 var(--body);font-variant-numeric:tabular-nums}
+.tile span{font-size:12.5px;color:var(--muted)}
+.tile[aria-pressed="true"]{border-color:var(--fg);background:var(--bg)}
+.tile i{position:absolute;top:7px;right:8px;width:14px;height:14px;display:grid;place-items:center;color:var(--done)}
+.tile.missed i{color:var(--warn)}
+.tile.partial i{color:var(--warn)}
+.tile.today span{color:var(--fg);font-weight:600}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.head h3{font:700 24px/1.2 var(--body);margin:0}
+.pill{border:1px solid var(--line);border-radius:99px;padding:3px 12px;font-size:14px;white-space:nowrap}
+.pill.warn{color:var(--warn);border-color:var(--warn)}
+.pill.ok{color:var(--done);border-color:var(--done)}
+.note{color:var(--muted);font-size:15px;margin:0}
+.note.warn{color:var(--warn)}
+.task{display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:10px 0;min-height:68px}
+.task:disabled{cursor:default}
+.ring{flex:none;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--muted);display:grid;place-items:center;color:var(--cta-fg)}
+.task.on .ring{background:var(--done);border-color:var(--done)}
+.task.part .ring{border-color:var(--warn);border-style:dashed}
+.task:disabled .ring{border-style:dotted}
+.task strong{font:600 clamp(25px,7vw,30px)/1.15 var(--display);display:block;font-variant-numeric:tabular-nums lining-nums}
+.task small{font-size:15px;color:var(--muted)}
+.stop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:48px}
+.stop label{font-size:15px;color:var(--muted);flex:1 1 90px}
+.num{width:92px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 10px;font-variant-numeric:tabular-nums}
+.btn2{height:44px;padding:0 16px;border-radius:10px;background:var(--raise);font-weight:600}
+.err{color:var(--warn);font-size:14px;margin:0 0 0 48px;min-height:0}
+.bar{height:8px;border-radius:99px;background:var(--surface);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;background:var(--fg);border-radius:99px;transition:width .3s}
+.prog{display:flex;flex-direction:column;gap:8px}
+.prog div.row{display:flex;justify-content:space-between;gap:12px;font-size:15px;font-variant-numeric:tabular-nums}
+.sec{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:18px}
+.sec h4{font:600 17px/1.3 var(--body);margin:0}
+.q{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;min-height:52px}
+.q span{min-width:0;overflow-wrap:anywhere}
+.q small{display:block;color:var(--muted);font-size:14px}
+.shelf{display:flex;align-items:flex-end;gap:3px;min-height:150px;border-bottom:4px solid var(--line);overflow-x:auto;scrollbar-width:thin;padding-top:4px}
+.spine{flex:none;height:132px;border-radius:3px 3px 0 0;color:var(--sp-fg);writing-mode:vertical-rl;font:600 13px/1 var(--display);padding:8px 0;display:flex;align-items:center;overflow:hidden;white-space:nowrap}
+.spine:nth-child(3n+1){height:140px}.spine:nth-child(3n+2){height:124px}
+.ghost{flex:none;width:30px;height:128px;border:1.5px dashed var(--line);border-bottom:0;border-radius:3px 3px 0 0}
+.foot{color:var(--muted);font-size:13px}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--bg);border-top:1px solid var(--line);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dock button{display:block;width:100%;max-width:528px;margin:0 auto;height:56px;border-radius:99px;background:var(--cta);color:var(--cta-fg);font-weight:700;font-size:18px}
+.dock button.soft{background:var(--surface);color:var(--fg)}
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet form{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 32px;display:flex;flex-direction:column;gap:16px}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f label{font-size:14px;color:var(--muted)}
+.f input{height:48px;width:100%;min-width:0;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calc{background:var(--surface);border-radius:12px;padding:14px 16px}
+.calc strong{font:600 26px/1.2 var(--display);display:block;font-variant-numeric:lining-nums}
+.primary{height:56px;border-radius:99px;background:var(--cta);color:var(--cta-fg);font-weight:700;font-size:18px}
+.primary:disabled{opacity:.45;cursor:default}
+.danger{color:var(--warn);min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.years{display:flex;gap:8px;flex-wrap:wrap}
+.year{min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.year[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.total strong{font:600 26px/1.2 var(--display);display:block;font-variant-numeric:lining-nums}
+.stars{display:flex;gap:2px;margin-left:-8px}
+.star{width:44px;height:44px;font-size:28px;line-height:1;color:var(--muted)}
+.star.on{color:var(--warn)}
+.rate{display:flex;flex-direction:column;gap:8px}
+.rate textarea{width:100%;min-height:96px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:10px 12px;font:inherit;color:inherit;resize:vertical}
+.q .side{flex:none;color:var(--muted);font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+.book.hc{flex-direction:row;gap:16px;align-items:flex-start}
+.bt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.cover{flex:none;width:84px;aspect-ratio:2/3;object-fit:cover;border-radius:4px;background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.spine.cvsp{width:86px!important;background-size:cover!important;background-position:center!important;border-radius:3px 3px 0 0;font-size:0}
+.cvbox{display:flex;gap:14px;align-items:flex-start}
+.cvprev{flex:none;width:72px;aspect-ratio:2/3;border-radius:4px;border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-size:12px;text-align:center;overflow:hidden;background:var(--surface)}
+.cvprev img{width:100%;height:100%;object-fit:cover;display:block}
+.cvbtns{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.cvbtns .btn2{display:inline-flex;align-items:center;cursor:pointer}
+.cvres{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cvres button{display:flex;flex-direction:column;gap:4px;text-align:left;font-size:12px;color:var(--muted);min-width:0}
+.cvres img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:4px;background:var(--surface)}
+.cvres span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<main class="wrap" id="root"><p class="note">Carregando sua estante...</p></main>
+<div class="dock" id="dock" hidden><button id="cta" type="button"></button></div>
+
+<div class="sheet" id="sheet" hidden>
+  <form id="bookForm" novalidate>
+    <div class="top">
+      <h1 id="sheetTitle">Livro da semana</h1>
+      <button class="icon" type="button" id="closeSheet" aria-label="Fechar">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l12 12M17 5L5 17"/></svg>
+      </button>
+    </div>
+    <div class="f">
+      <label for="fTitle">Nome do livro</label>
+      <input id="fTitle" autocomplete="off" required>
+    </div>
+    <div hidden id="lookupBox" class="f">
+      <button class="btn2" type="button" id="lookup">Buscar número de páginas</button>
+    </div>
+    <p class="note" id="lookupNote" hidden></p>
+    <div class="f">
+      <label for="fAuthor">Autor (opcional)</label>
+      <input id="fAuthor" autocomplete="off">
+    </div>
+    <div class="f">
+      <label>Capa</label>
+      <div class="cvbox">
+        <div class="cvprev" id="cvPrev">Sem capa</div>
+        <div class="cvbtns">
+          <button class="btn2" type="button" id="cvSearch">Buscar capa</button>
+          <label class="btn2">Tirar foto<input type="file" accept="image/*" capture="environment" id="cvCam" hidden></label>
+          <label class="btn2">Galeria<input type="file" accept="image/*" id="cvGal" hidden></label>
+          <button class="danger" type="button" id="cvDel" hidden>Remover capa</button>
+        </div>
+      </div>
+      <p class="note" id="cvNote" aria-live="polite" hidden></p>
+      <div class="cvres" id="cvRes"></div>
+    </div>
+    <div class="two">
+      <div class="f"><label for="fFirst">Começo na página</label><input id="fFirst" type="number" inputmode="numeric" min="1" value="1"></div>
+      <div class="f"><label for="fLast">Termino na página</label><input id="fLast" type="number" inputmode="numeric" min="1"></div>
+    </div>
+    <div class="f">
+      <label for="fStart" id="fStartLabel">Primeiro dia de leitura</label>
+      <input id="fStart" type="date">
+    </div>
+    <div class="calc" id="calc" aria-live="polite"></div>
+    <button class="primary" id="saveBook" type="submit">Salvar livro</button>
+    <button class="danger" id="delBook" type="button" hidden>Apagar este livro</button>
+  </form>
+</div>
+
+<script>window.__voltar=function(){var s=document.getElementById("sheet");if(s&&!s.hidden){document.getElementById("closeSheet").click()}else if(window.AndroidApp){AndroidApp.exit()}};</script>
+<script>
+/*LOGIC-START*/
+const WD=["dom","seg","ter","qua","qui","sex","sáb"],MO=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const pad=n=>String(n).padStart(2,"0");
+const toDate=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))};
+const addDays=(s,n)=>new Date(toDate(s).getTime()+n*864e5).toISOString().slice(0,10);
+const diffDays=(a,b)=>Math.round((toDate(b)-toDate(a))/864e5);
+const dayLabel=s=>{const d=toDate(s);return WD[d.getUTCDay()]+" "+pad(d.getUTCDate())};
+const longLabel=s=>{const d=toDate(s);return dayLabel(s)+" "+MO[d.getUTCMonth()]};
+
+function buildPlan(b,today){
+  const first=b.firstPage||1,last=b.lastPage,total=last-first+1,n=b.days||7,log=b.log||{};
+  const dates=Array.from({length:n},(_,i)=>addDays(b.startDate,i));
+  const before=d=>{let r=first-1;for(const k in log)if(k<d&&log[k]>r)r=log[k];return r};
+  const reached=Object.values(log).reduce((a,c)=>Math.max(a,c),first-1);
+  const finished=reached>=last;
+  const end=dates[n-1];
+  const anchor=today<dates[0]?dates[0]:today>end?end:today;
+  const ai=dates.indexOf(anchor);
+  const baseEnd=i=>Math.min(last,first-1+Math.ceil(total*(i+1)/n));
+  const start=before(anchor);
+  const anchorTo=Math.min(last,start+Math.ceil(Math.max(0,last-start)/(n-ai)));
+  let cursor=start,futMax=first-1;
+  for(let j=ai+1;j<n;j++){const v=log[dates[j]];if(v>futMax)futMax=v}
+  const laterMax=i=>{let r=first-1,by=-1;for(let j=i+1;j<n;j++){const v=log[dates[j]];if(v>r){r=v;by=j}}return[r,by]};
+  const days=dates.map((date,i)=>{
+    let from,to,status,by=-1;const logged=log[date];
+    if(i<ai){
+      from=before(date)+1;
+      if(logged>=from){to=logged;status="done"}
+      else if(from>last||from>baseEnd(i)){to=from-1;status="free"}
+      else{to=Math.min(last,Math.max(baseEnd(i),from));const lm=laterMax(i);if(lm[0]>=to){status="ahead";by=lm[1]}else status="missed"}
+    }else{
+      from=cursor+1;to=Math.min(last,cursor+Math.ceil(Math.max(0,last-cursor)/(n-i)));
+      const lm=laterMax(i);
+      if(logged>=from&&logged>=to){status="done";to=Math.max(to,logged);cursor=to}
+      else if(logged>=from){status="partial";cursor=logged}
+      else if(from>last){status="free";to=from-1}
+      else if(lm[0]>=to){status="ahead";by=lm[1];cursor=to}
+      else{status=i===ai?"pending":"future";cursor=to}
+    }
+    return{date,index:i,from,to,pages:Math.max(0,to-from+1),status,logged,by,isToday:date===today};
+  });
+  const expected=ai>0?baseEnd(ai-1):first-1;
+  const missed=days.filter(d=>d.status==="missed").length;
+  return{dates,days,first,last,total,n,reached,finished,anchor,ai,
+    read:reached-first+1,left:last-reached,perDay:Math.ceil(total/n),
+    todayPages:days[ai].pages,behind:expected-Math.max(start,futMax),missed,
+    notStarted:today<dates[0],overdue:today>end&&!finished,
+    finishDate:finished?Object.keys(log).filter(k=>log[k]>=last).sort()[0]:null};
+}
+/*LOGIC-END*/
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const CHECK='<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5l3.2 3.2L12 3.8"/></svg>';
+const DOT='<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
+const CHEV='<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>';
+const PLUS='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const pg=n=>n+(n===1?" página":" páginas");
+
+const S={books:[],ready:false,sel:null,day:null,editing:null,error:"",note:"",store:null,local:false};
+const LKEY="livro-da-semana";
+const cache=()=>{try{localStorage.setItem(LKEY,JSON.stringify(S.books))}catch(e){S.note="Não consegui salvar no celular: o espaço acabou. Remova a capa de algum livro antigo."}};
+const uncache=()=>{try{return JSON.parse(localStorage.getItem(LKEY)||"[]")}catch(e){return[]}};
+
+const queues={};
+function persist(b){
+  cache();
+  if(!S.store)return;
+  const {id,...data}=b;
+  queues[id]=(queues[id]||Promise.resolve()).then(()=>S.store.doc(id).set(data)).catch(failSave);
+}
+function removeBook(id){
+  S.books=S.books.filter(b=>b.id!==id);cache();
+  if(S.store)(queues[id]||Promise.resolve()).then(()=>S.store.doc(id).delete()).catch(failSave);
+}
+function failSave(e){
+  S.note=e&&e.code==="quota_exceeded"?"A estante está cheia. Apague um livro para liberar espaço.":"Não consegui salvar a última alteração. Confira a conexão e tente de novo.";
+  render();
+}
+function update(b){
+  const i=S.books.findIndex(x=>x.id===b.id);
+  if(i<0)S.books.push(b);else S.books[i]=b;
+  persist(b);render();
+}
+const clone=b=>JSON.parse(JSON.stringify(b));
+const byStart=(a,b)=>a.startDate<b.startDate?-1:a.startDate>b.startDate?1:0;
+
+function groups(today){
+  const open=[],done=[];
+  for(const b of S.books)(buildPlan(b,today).finished?done:open).push(b);
+  open.sort((a,b)=>(a.example?1:0)-(b.example?1:0)||byStart(a,b));
+  done.sort((a,b)=>byStart(a,b));
+  return{open,done};
+}
+function nextStart(today){
+  const real=S.books.filter(b=>!b.example&&!buildPlan(b,today).finished);
+  let d=today;
+  for(const b of real){const e=addDays(b.startDate,b.days||7);if(e>d)d=e}
+  return d;
+}
+
+function pill(p){
+  if(p.finished)return["ok","Livro concluído"];
+  if(p.notStarted)return["","Ainda não começou"];
+  if(p.overdue)return["warn","Prazo terminou"];
+  if(p.missed>0)return["warn",p.missed+(p.missed===1?" dia perdido":" dias perdidos")];
+  if(p.behind>0)return["warn",p.behind+" pág. atrás"];
+  if(p.behind<0)return["ok",-p.behind+" pág. à frente"];
+  return["ok","Em dia"];
+}
+function adviceFor(p){
+  if(p.finished||p.notStarted||p.overdue)return"";
+  if(p.todayPages>p.perDay)return"A meta subiu de "+p.perDay+" para "+p.todayPages+" páginas por dia para você terminar no prazo.";
+  if(p.todayPages<p.perDay&&p.todayPages>0&&p.behind<0)return"Você adiantou. A meta caiu de "+p.perDay+" para "+p.todayPages+" páginas por dia.";
+  return"";
+}
+function spine(b,i){
+  const w=Math.round(Math.max(24,Math.min(58,(b.lastPage-(b.firstPage||1)+1)/9)));
+  if(b.cover)return'<button class="spine cvsp" data-act="open" data-id="'+esc(b.id)+'" style="background-image:url(\''+esc(b.cover)+'\')" aria-label="'+esc(b.title)+'"></button>';
+  return'<button class="spine" data-act="open" data-id="'+esc(b.id)+'" style="width:'+w+'px;background:var(--sp'+(i%5+1)+')" aria-label="'+esc(b.title)+'">'+esc(b.title)+"</button>";
+}
+function shelfHtml(done){
+  const year=todayISO().slice(0,4);
+  const count=done.filter(b=>buildPlan(b,todayISO()).finishDate?.startsWith(year)).length;
+  const firsts=S.books.filter(b=>!b.example&&!b.manual).map(b=>b.startDate).sort();
+  const weeks=firsts.length?Math.max(1,Math.ceil((diffDays(firsts[0],todayISO())+1)/7)):0;
+  const ghosts=Array.from({length:Math.max(0,5-done.length)},()=>'<div class="ghost" aria-hidden="true"></div>').join("");
+  const line=done.length?count+(count===1?" livro terminado":" livros terminados")+" em "+year+(weeks?", em "+weeks+(weeks===1?" semana":" semanas")+" de leitura.":"."):"Cada livro terminado entra aqui.";
+  return'<section class="sec"><h4>Estante</h4><div class="shelf">'+done.map(spine).join("")+ghosts+'</div><p class="note">'+line+"</p></section>"+readHtml();
+}
+
+function readHtml(){
+  const today=todayISO(),now=today.slice(0,4);
+  const rows=S.books.map(b=>({b,p:buildPlan(b,today)})).filter(x=>x.p.finished).map(x=>({...x,date:x.p.finishDate})).sort((a,c)=>a.date<c.date?1:-1);
+  const years=[...new Set([now,...rows.map(r=>r.date.slice(0,4))])].sort().reverse();
+  const y=years.includes(S.year)?S.year:now;
+  const list=rows.filter(r=>r.date.startsWith(y));
+  const pages=list.reduce((a,r)=>a+r.p.total,0);
+  const chips=years.length>1?'<div class="years">'+years.map(v=>'<button class="year" data-act="year" data-year="'+v+'" aria-pressed="'+(v===y)+'">'+v+"</button>").join("")+"</div>":"";
+  const items=list.map(r=>'<button class="q" data-act="open" data-id="'+esc(r.b.id)+'"><span>'+esc(r.b.title)+"<small>"+esc(r.b.author||"Autor não informado")+"</small></span><span class=\"side\">"+longLabel(r.date)+"<br>"+(r.b.rating?"★".repeat(r.b.rating):r.p.total+" págs.")+"</span></button>").join("");
+  return'<section class="sec"><h4>Livros lidos</h4>'+chips+'<div class="total"><strong>'+list.length+(list.length===1?" livro":" livros")+" em "+y+'</strong><span class="note">'+pages.toLocaleString("pt-BR")+" páginas lidas</span></div>"+items+'<button class="link" data-act="addread" style="align-self:flex-start">Adicionar livro que já li</button></section>';
+}
+function render(){
+  const root=$("root"),dock=$("dock"),today=todayISO();
+  if(!S.ready)return;
+  const{open,done}=groups(today);
+  let b=S.books.find(x=>x.id===S.sel)||open[0]||null;
+  const topbar='<div class="top"><h1>Livro da Semana</h1><button class="icon" data-act="new" aria-label="Adicionar livro">'+PLUS+"</button></div>";
+  if(!b){
+    const lastDone=done[done.length-1];
+    root.innerHTML=topbar+'<div class="book"><h2>'+(lastDone?"Qual é o próximo livro?":"Qual é o livro desta semana?")+'</h2><p class="note">Coloque o nome e o número de páginas. O app divide a leitura em 7 dias e ajusta a meta se você atrasar.</p></div>'+shelfHtml(done)+footHtml();
+    dock.hidden=false;$("cta").textContent="Adicionar livro";$("cta").dataset.act="new";$("cta").className="";
+    return;
+  }
+  S.sel=b.id;
+  const p=buildPlan(b,today);
+  if(!S.day||!p.dates.includes(S.day))S.day=p.anchor;
+  const d=p.days[p.dates.indexOf(S.day)];
+  const[pc,pt]=pill(p);
+  const tiles=p.days.map(x=>{
+    const c=[x.status==="missed"?"missed":"",x.status==="partial"?"partial":"",x.isToday?"today":""].join(" ");
+    const mark=(x.status==="done"||x.status==="ahead")?CHECK:(x.status==="missed"||x.status==="partial")?DOT:"";
+    const lab=dayLabel(x.date);
+    return'<button class="tile '+c+'" data-act="day" data-date="'+x.date+'" aria-pressed="'+(x.date===S.day)+'" aria-label="Dia '+(x.index+1)+", "+lab+'"><b>'+(x.index+1)+"</b><span>"+(x.isToday?"hoje":lab)+"</span>"+(mark?"<i>"+mark+"</i>":"")+"</button>";
+  }).join("");
+
+  let task="";
+  const canLog=d.status!=="free"&&d.status!=="ahead";
+  if(d.status==="free"){
+    task='<p class="note">'+(p.finished?"Nada para ler neste dia. O livro já terminou.":"Sem leitura neste dia.")+"</p>";
+  }else{
+    const on=d.status==="done"||d.status==="ahead",part=d.status==="partial";
+    const sub=d.status==="ahead"?"Já lida quando você marcou o dia "+(d.by+1)+". Para desfazer, desmarque o dia "+(d.by+1)+"."
+      :on?(d.isToday?"Leitura de hoje feita":d.index>p.ai?"Leitura adiantada":"Leitura feita")
+      :part?"Você parou na página "+d.logged+". Faltam "+pg(d.to-d.logged)+" da meta."
+      :d.status==="missed"?"Dia sem leitura registrada. Marque se você leu."
+      :d.status==="future"?pg(d.pages)+" previstas. Se já leu, pode marcar."
+      :pg(d.pages)+(p.notStarted?" no primeiro dia":" hoje");
+    task='<button class="task '+(on?"on":"")+(part?" part":"")+'" data-act="tick" '+(canLog?"":"disabled")+' aria-pressed="'+on+'"><span class="ring">'+(on?CHECK:"")+"</span><span><strong>pp. "+d.from+"–"+d.to+"</strong><small>"+sub+"</small></span></button>";
+    if(canLog)task+='<form class="stop" id="stopForm"><label for="stopPage">Parei em outra página</label><input class="num" id="stopPage" type="number" inputmode="numeric" min="'+d.from+'" max="'+p.last+'" placeholder="'+(d.logged||d.to)+'"><button class="btn2" type="submit">Salvar</button></form>';
+    if(S.error)task+='<p class="err">'+esc(S.error)+"</p>";
+  }
+  const advice=adviceFor(p);
+  const pct=Math.round(p.read/p.total*100);
+  const extend=p.overdue?'<p class="note warn">Faltam '+pg(p.left)+'. Termine hoje ou estenda o prazo. <button class="link" data-act="extend">Mais 3 dias</button></p>':"";
+  const rate=p.finished?'<div class="rate"><div class="stars" role="group" aria-label="Sua nota">'+[1,2,3,4,5].map(n=>'<button class="star'+(n<=(b.rating||0)?" on":"")+'" data-act="rate" data-n="'+n+'" aria-label="'+n+(n===1?" estrela":" estrelas")+'">★</button>').join("")+'</div><div class="f"><label for="bookNote">Anotações sobre o livro</label><textarea id="bookNote">'+esc(b.note||"")+"</textarea></div></div>":"";
+  const others=open.filter(x=>x.id!==b.id);
+  const queue=others.length?'<section class="sec"><h4>Próximos livros</h4>'+others.map(x=>{const q=buildPlan(x,today);return'<button class="q" data-act="open" data-id="'+esc(x.id)+'"><span>'+esc(x.title)+"<small>"+longLabel(x.startDate)+", "+q.perDay+" págs. por dia</small></span>"+CHEV+"</button>"}).join("")+"</section>":"";
+
+  root.innerHTML=topbar
+   +'<div class="book'+(b.cover?" hc":"")+'">'+(b.cover?'<img class="cover" alt="" src="'+esc(b.cover)+'">':"")+'<div class="bt"><h2>'+esc(b.title)+'</h2><div class="meta">'
+   +(b.author?"<span>"+esc(b.author)+"</span>":"")+"<span>"+p.total+" páginas</span><span>"+(p.finished?"Lido em "+longLabel(p.finishDate):dayLabel(p.dates[0])+" a "+longLabel(p.dates[p.n-1]))+"</span>"
+   +(b.example?'<span class="chip">Exemplo</span>':"")+'<button class="link" data-act="edit">Editar</button></div>'
+   +(b.example?'<p class="note">Este livro é só um exemplo. Ele some quando você adicionar o seu primeiro livro.</p>':"")+"</div></div>"
+   +(b.manual?rate:'<div class="strip" id="strip">'+tiles+"</div>"
+   +'<div class="head"><h3>Dia '+(d.index+1)+" de "+p.n+'</h3><span class="pill '+pc+'">'+pt+"</span></div>"
+   +(advice?'<p class="note'+(p.todayPages>p.perDay?" warn":"")+'">'+advice+"</p>":"")
+   +"<div>"+task+"</div>"+extend+rate)
+   +'<div class="prog"><div class="row"><span>'+Math.max(0,p.read)+" de "+p.total+" páginas</span><span>"+pct+'%</span></div><div class="bar"><i style="width:'+pct+'%"></i></div></div>'
+   +queue+shelfHtml(done)+footHtml();
+  const sel=root.querySelector('.tile[aria-pressed="true"]');
+  if(sel){const st=$("strip");st.scrollLeft=sel.offsetLeft-st.offsetLeft-(st.clientWidth-sel.offsetWidth)/2}
+
+  const cta=$("cta");dock.hidden=false;cta.className="";
+  if(p.finished&&open.length){cta.textContent="Voltar para o livro atual";cta.dataset.act="current";cta.className="soft"}
+  else if(p.finished){cta.textContent="Escolher o próximo livro";cta.dataset.act="new"}
+  else if(d.status==="ahead"){const nx=p.days.find(x=>x.index>d.index&&(x.status==="future"||x.status==="pending"||x.status==="partial"));if(nx){cta.textContent="Ir para o dia "+(nx.index+1);cta.dataset.act="day";cta.dataset.date=nx.date}else{cta.textContent="Voltar para hoje";cta.dataset.act="home"}cta.className="soft"}
+  else if(d.status==="free"){cta.textContent="Voltar para hoje";cta.dataset.act="home";cta.className="soft"}
+  else if(d.status==="done"){cta.textContent="Desfazer esta leitura";cta.dataset.act="tick";cta.className="soft"}
+  else{cta.textContent="Li até a página "+d.to;cta.dataset.act="tick"}
+}
+function footHtml(){
+  const t=S.note||(S.local?"Seus livros ficam salvos só neste aparelho.":"Salvo na sua conta.");
+  return'<section class="sec"><h4>Backup</h4><p class="note">Copie o backup de vez em quando e guarde numa nota. Ele também serve para passar seus livros para outro aparelho: copie num, cole no outro e toque em Restaurar.</p>'
+   +'<div class="cvbtns" style="flex-direction:row;flex-wrap:wrap"><button class="btn2" type="button" data-act="bkcopy">Copiar backup</button><button class="btn2" type="button" data-act="bkrestore">Restaurar</button></div>'
+   +'<textarea id="bkText" rows="3" aria-label="Texto do backup" placeholder="Cole aqui o backup para restaurar" style="width:100%;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:10px 12px;font:13px/1.4 ui-monospace,monospace;color:inherit"></textarea>'
+   +'<p class="note" id="bkMsg" aria-live="polite">'+esc(S.bkMsg||"")+'</p></section><p class="foot">'+esc(t)+"</p>";
+}
+
+function currentBook(){return S.books.find(x=>x.id===S.sel)}
+function logDay(b,p,d,page){setLog(b,d.index>p.ai&&page>=p.last?p.anchor:d.date,page)}
+function setLog(b,date,page){const n=clone(b);n.log=n.log||{};if(page===null)delete n.log[date];else n.log[date]=page;update(n)}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t)return;
+  const a=t.dataset.act,b=currentBook(),today=todayISO();
+  S.error="";
+  if(a==="new")openSheet(null);
+  else if(a==="addread")openSheet(null,true);
+  else if(a==="edit")openSheet(b,!!b.manual);
+  else if(a==="current"){S.sel=null;S.day=null;render();scrollTo(0,0)}
+  else if(a==="year"){S.year=t.dataset.year;render()}
+  else if(a==="rate"){const n=clone(b),v=Number(t.dataset.n);n.rating=n.rating===v?0:v;update(n)}
+  else if(a==="day"){S.day=t.dataset.date;render()}
+  else if(a==="home"){S.day=null;render()}
+  else if(a==="open"){S.sel=t.dataset.id;S.day=null;render();scrollTo(0,0)}
+  else if(a==="bkcopy"){
+    const txt=JSON.stringify({app:"livro-da-semana",v:1,books:S.books}),ta=$("bkText"),msg=$("bkMsg");ta.value=txt;
+    const man=()=>{ta.focus();ta.select();msg.textContent="Texto selecionado. Toque e segure para copiar."};
+    try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent="Backup copiado. Cole numa nota e guarde."},man)}catch(err){man()}
+  }
+  else if(a==="bkrestore"){
+    const ta=$("bkText"),msg=$("bkMsg");let d;
+    try{d=JSON.parse(ta.value.trim())}catch(err){d=null}
+    const list=Array.isArray(d)?d:d&&Array.isArray(d.books)?d.books:null;
+    if(!list||!list.every(x=>x&&x.id&&x.title&&x.lastPage&&x.startDate)){msg.textContent="Esse texto não é um backup válido do Livro da Semana.";return}
+    S.books=list;cache();S.sel=null;S.day=null;S.bkMsg=list.length+(list.length===1?" livro restaurado.":" livros restaurados.");render();S.bkMsg="";
+  }
+  else if(a==="extend"){const n=clone(b);n.days=(n.days||7)+3;S.day=today;update(n)}
+  else if(a==="tick"){
+    const p=buildPlan(b,today),d=p.days[p.dates.indexOf(S.day)];
+    if(d.status==="ahead")return;
+    if(d.status==="done")setLog(b,d.date,null);
+    else logDay(b,p,d,d.to);
+  }
+});
+document.addEventListener("change",e=>{
+  if(e.target.id!=="bookNote")return;
+  const n=clone(currentBook());n.note=e.target.value;update(n);
+});
+document.addEventListener("submit",e=>{
+  if(e.target.id!=="stopForm")return;
+  e.preventDefault();
+  const b=currentBook(),p=buildPlan(b,todayISO()),d=p.days[p.dates.indexOf(S.day)];
+  const v=parseInt($("stopPage").value,10);
+  if(!(v>=d.from&&v<=p.last)){S.error="Digite uma página entre "+d.from+" e "+p.last+".";render();return}
+  S.error="";logDay(b,p,d,v);
+});
+
+function field(id){return $(id).value.trim()}
+function formBook(){
+  const first=parseInt(field("fFirst"),10)||1,last=parseInt(field("fLast"),10),start=field("fStart");
+  return{first,last,start,valid:!!field("fTitle")&&last>=first&&!!start};
+}
+function updateCalc(){
+  const f=formBook(),c=$("calc");
+  if(S.readMode){c.innerHTML='<p class="note">'+(f.last>=f.first&&f.start?"Entra na sua lista de "+f.start.slice(0,4)+".":"Coloque a última página e a data.")+"</p>";$("saveBook").disabled=!f.valid;return}
+  if(!(f.last>=f.first)||!f.start){c.innerHTML='<p class="note">Coloque a última página para ver a meta diária.</p>';$("saveBook").disabled=true;return}
+  const days=S.editing?.days||7,total=f.last-f.first+1,per=Math.ceil(total/days);
+  c.innerHTML="<strong>"+per+" páginas por dia</strong><span class=\"note\">"+total+" páginas em "+days+" dias, de "+dayLabel(f.start)+" a "+longLabel(addDays(f.start,days-1))+"</span>";
+  $("saveBook").disabled=!f.valid;
+}
+function openSheet(b,readMode){
+  S.editing=b;S.readMode=!!readMode;
+  $("sheetTitle").textContent=b?"Editar livro":readMode?"Livro que já li":"Livro da semana";
+  $("fStartLabel").textContent=readMode?"Terminei em":"Primeiro dia de leitura";
+  $("fTitle").value=b?.title||"";$("fAuthor").value=b?.author||"";
+  $("fFirst").value=b?.firstPage||1;$("fLast").value=b?.lastPage||"";
+  const fin=b?buildPlan(b,todayISO()).finishDate:null;
+  $("fStart").value=readMode?(fin||todayISO()):(b?.startDate||nextStart(todayISO()));
+  $("lookupNote").hidden=true;
+  S.cover=b?.cover||"";showCover();$("cvRes").innerHTML="";$("cvNote").hidden=true;
+  const del=$("delBook");del.hidden=!b;del.textContent="Apagar este livro";del.dataset.sure="";
+  updateCalc();$("sheet").hidden=false;$("sheet").scrollTop=0;
+  document.body.style.overflow="hidden";
+  if(!b)$("fTitle").focus();
+}
+function closeSheet(){$("sheet").hidden=true;document.body.style.overflow="";S.editing=null}
+$("closeSheet").onclick=closeSheet;
+$("bookForm").addEventListener("input",updateCalc);
+$("delBook").onclick=()=>{
+  const del=$("delBook");
+  if(!del.dataset.sure){del.dataset.sure="1";del.textContent="Toque de novo para apagar";return}
+  const id=S.editing.id;closeSheet();removeBook(id);S.sel=null;S.day=null;render();
+};
+$("bookForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const f=formBook();if(!f.valid)return;
+  const old=S.editing;
+  const b=old?clone(old):{id:"b"+Date.now().toString(36),days:7,log:{}};
+  if(S.cover)b.cover=S.cover;else delete b.cover;
+  Object.assign(b,{title:field("fTitle"),author:field("fAuthor"),firstPage:f.first,lastPage:f.last,startDate:f.start});
+  delete b.example;
+  if(S.readMode){b.manual=true;b.startDate=addDays(f.start,-6);b.log={[f.start]:f.last}}
+  else if(old){const fin=buildPlan(old,todayISO()).finishDate;if(fin)b.log[fin]=f.last}
+  const keepView=S.readMode&&!old;
+  if(!old)S.books.filter(x=>x.example).map(x=>x.id).forEach(removeBook);
+  closeSheet();if(!keepView){S.sel=b.id;S.day=null}update(b);if(!keepView)scrollTo(0,0);
+});
+
+/* Capas: busca no Google Books e Open Library, ou foto do celular */
+function showCover(){
+  const p=$("cvPrev");
+  p.innerHTML=S.cover?'<img alt="Capa escolhida" src="'+esc(S.cover)+'">':"Sem capa";
+  $("cvDel").hidden=!S.cover;
+}
+function cvNote(t){const n=$("cvNote");n.hidden=!t;n.textContent=t||""}
+function shrink(src){
+  return new Promise((ok,no)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const k=Math.min(1,360/img.naturalWidth,540/img.naturalHeight);
+      const w=Math.max(1,Math.round(img.naturalWidth*k)),h=Math.max(1,Math.round(img.naturalHeight*k));
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      try{ok(c.toDataURL("image/jpeg",0.78))}catch(e){no(e)}
+    };
+    img.onerror=()=>no(new Error("img"));
+    img.src=src;
+  });
+}
+const b64bytes=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function net(url,kind){
+  if(window.AndroidApp&&AndroidApp.get){
+    return new Promise(r=>setTimeout(()=>{
+      let s="";try{s=AndroidApp.get(url)||""}catch(e){}
+      if(!s)return r(null);
+      r(kind==="img"?"data:image/jpeg;base64,"+s:new TextDecoder().decode(b64bytes(s)));
+    },40));
+  }
+  return fetch(url).then(x=>{if(!x.ok)return null;return kind==="img"?x.blob().then(bl=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(bl)})):x.text()}).catch(()=>null);
+}
+async function findCovers(title,author){
+  const out=[],seen=new Set();
+  const q="intitle:"+title+(author?" inauthor:"+author:"");
+  const g=await net("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=12&printType=books");
+  try{
+    for(const it of (g&&JSON.parse(g).items)||[]){
+      const v=it.volumeInfo||{},il=v.imageLinks||{};
+      let u=il.thumbnail||il.smallThumbnail;if(!u)continue;
+      u=u.replace(/^http:/,"https:").replace(/&edge=curl/,"");
+      if(seen.has(u))continue;seen.add(u);
+      out.push({img:u,title:v.title||"",author:(v.authors||[]).join(", "),pages:v.pageCount||0});
+    }
+  }catch(e){}
+  const o=await net("https://openlibrary.org/search.json?title="+encodeURIComponent(title)+(author?"&author="+encodeURIComponent(author):"")+"&limit=12&fields=title,author_name,cover_i,number_of_pages_median");
+  try{
+    for(const d of (o&&JSON.parse(o).docs)||[]){
+      if(!d.cover_i)continue;
+      out.push({img:"https://covers.openlibrary.org/b/id/"+d.cover_i+"-M.jpg",big:"https://covers.openlibrary.org/b/id/"+d.cover_i+"-L.jpg",title:d.title||"",author:(d.author_name||[]).join(", "),pages:d.number_of_pages_median||0});
+    }
+  }catch(e){}
+  return{list:out.slice(0,12),failed:g===null&&o===null};
+}
+let cvFound=[];
+$("cvSearch").onclick=async()=>{
+  const title=field("fTitle"),btn=$("cvSearch");
+  if(!title){cvNote("Digite o nome do livro primeiro.");return}
+  btn.disabled=true;btn.textContent="Buscando...";cvNote("Procurando capas. Pode levar alguns segundos.");$("cvRes").innerHTML="";
+  const r=await findCovers(title,field("fAuthor"));
+  btn.disabled=false;btn.textContent="Buscar capa";
+  cvFound=r.list;
+  if(r.failed){cvNote("Sem conexão com a internet. Use Tirar foto ou Galeria.");return}
+  if(!cvFound.length){cvNote("Não achei a capa desse livro. Use Tirar foto ou Galeria.");return}
+  cvNote("Toque na capa certa. Se nenhuma for a sua edição, use Tirar foto.");
+  $("cvRes").innerHTML=cvFound.map((c,i)=>'<button type="button" data-i="'+i+'"><img alt="" loading="lazy" src="'+esc(c.img)+'"><span>'+esc(c.title)+"</span><span>"+esc(c.author)+"</span></button>").join("");
+};
+$("cvRes").onclick=async e=>{
+  const bt=e.target.closest("button[data-i]");if(!bt)return;
+  const c=cvFound[+bt.dataset.i];if(!c)return;
+  cvNote("Salvando a capa...");
+  let data=c.big?await net(c.big,"img"):null;
+  if(!data)data=await net(c.img,"img");
+  try{if(!data)throw 0;S.cover=await shrink(data)}catch(err){S.cover=c.big||c.img}
+  showCover();$("cvRes").innerHTML="";
+  let msg="Capa escolhida. Ela fica salva quando você tocar em Salvar livro.";
+  if(c.pages>0&&!field("fLast")){$("fFirst").value=1;$("fLast").value=c.pages;updateCalc();msg+=" Coloquei "+c.pages+" páginas pela edição encontrada; confira a última página do seu exemplar."}
+  cvNote(msg);
+};
+async function fromFile(inp){
+  const f=inp.files&&inp.files[0];inp.value="";if(!f)return;
+  cvNote("Preparando a foto...");
+  const u=URL.createObjectURL(f);
+  try{S.cover=await shrink(u);showCover();$("cvRes").innerHTML="";cvNote("Capa escolhida. Ela fica salva quando você tocar em Salvar livro.")}
+  catch(e){cvNote("Não consegui abrir essa imagem. Tente outra.")}
+  finally{URL.revokeObjectURL(u)}
+}
+$("cvCam").onchange=e=>fromFile(e.target);
+$("cvGal").onchange=e=>fromFile(e.target);
+$("cvDel").onclick=()=>{S.cover="";showCover();cvNote("Capa removida. Toque em Salvar livro para confirmar.")};
+
+let sampleFn=null;
+$("lookup").onclick=async()=>{
+  const title=field("fTitle"),note=$("lookupNote"),btn=$("lookup");
+  note.hidden=false;
+  if(!title){note.textContent="Digite o nome do livro primeiro.";return}
+  btn.disabled=true;btn.textContent="Procurando...";note.textContent="Isso pode levar até um minuto.";
+  try{
+    const r=await sampleFn.json('Livro: "'+title.slice(0,200)+'"'+(field("fAuthor")?" de "+field("fAuthor").slice(0,120):"")+'. Informe quantas páginas tem a edição mais comum, de preferência em português do Brasil. Responda apenas com JSON: {"found":true,"author":"nome","pages":320,"edition":"editora ou edição"}. Se não reconhecer o livro com segurança, responda {"found":false}. Não invente.');
+    const pages=parseInt(r&&r.pages,10);
+    if(r&&r.found&&pages>0){
+      $("fFirst").value=1;$("fLast").value=pages;
+      if(!field("fAuthor")&&r.author)$("fAuthor").value=String(r.author);
+      note.textContent="Estimativa: "+pages+" páginas"+(r.edition?" ("+String(r.edition)+")":"")+". Edições mudam, então confira a última página do seu exemplar.";
+      updateCalc();
+    }else note.textContent="Não reconheci esse livro. Digite a última página manualmente.";
+  }catch(err){
+    const c=err&&err.code;
+    if(c==="not_granted"||c==="sampling_disabled"||c==="not_declared"){$("lookupBox").hidden=true;note.textContent="Busca indisponível. Digite a última página manualmente."}
+    else if(c==="rate_limited")note.textContent="Muitas buscas agora. Tente mais tarde ou digite a última página.";
+    else note.textContent="A busca falhou. Tente de novo ou digite a última página.";
+  }finally{btn.disabled=false;btn.textContent="Buscar número de páginas"}
+};
+
+(async()=>{
+  const finish=()=>{S.ready=true;render()};
+  let loaded=false;
+  const timer=setTimeout(()=>{if(!loaded){S.note="Não consegui abrir sua estante ainda. Confira a conexão.";S.books=uncache();finish()}},10000);
+  const api=window.claude;
+  const db=api?await api.use("db").catch(()=>null):null;
+  if(!db){clearTimeout(timer);S.local=true;S.books=uncache();finish()}
+  else{
+    S.store=db.collection("books");
+    S.store.onSnapshot(snap=>{
+      const next=snap.docs.map(d=>({id:d.id,...JSON.parse(JSON.stringify(d.data()))}));
+      const same=JSON.stringify(next)===JSON.stringify(S.books);
+      if(!snap.metadata.fromCache){loaded=true;clearTimeout(timer);if(S.note.startsWith("Não consegui abrir"))S.note=""}
+      if(!snap.metadata.fromCache||next.length){
+        S.books=next;cache();
+        const active=document.activeElement;
+        if(!S.ready||(!same&&!(active&&(active.id==="stopPage"||active.id==="bookNote")))){S.ready=true;render()}
+      }
+    },()=>{clearTimeout(timer);S.local=true;S.store=null;S.books=uncache();S.note="Sem conexão com sua conta. Salvando só neste aparelho.";finish()});
+  }
+  if(api){
+    sampleFn=await api.use("sample").catch(()=>null);
+    if(sampleFn)$("lookupBox").hidden=false;
+  }
+})();
+
+let lastDay=todayISO();
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden&&todayISO()!==lastDay){lastDay=todayISO();S.day=null;render()}
+});
+</script>
+
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+</body></html>
