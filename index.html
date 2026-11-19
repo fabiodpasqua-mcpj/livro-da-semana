@@ -16,7 +16,7 @@
 :root{
   color-scheme:dark;
   --bg:#131416;--surface:#222327;--raise:#2c2d32;--fg:#f2f0ec;--muted:#a3a2a6;--line:#3b3c42;
-  --cta:#efedea;--cta-fg:#17181a;--done:#9cc7ad;--warn:#e8b36a;
+  --cta:#9cc7ad;--cta-fg:#0f2219;--brand:#9cc7ad;--brand-soft:#1d2b24;--wood:#5a4636;--done:#9cc7ad;--warn:#e8b36a;
   --sp1:#7f9a8c;--sp2:#b98a63;--sp3:#7d8bb0;--sp4:#ad7a86;--sp5:#a6a06a;--sp-fg:#141517;
   --display:"Literata",Georgia,"Times New Roman",serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -24,13 +24,13 @@
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
   color-scheme:light;
   --bg:#f5f5f3;--surface:#e8e8e5;--raise:#dddddb;--fg:#17181a;--muted:#5f5f63;--line:#c9c9c6;
-  --cta:#1b1c1f;--cta-fg:#f5f5f3;--done:#2f7551;--warn:#9a5d0c;
+  --cta:#2f7551;--cta-fg:#f5f5f3;--brand:#2f7551;--brand-soft:#dfece4;--wood:#a88b6c;--done:#2f7551;--warn:#9a5d0c;
   --sp1:#6f8d7d;--sp2:#b0805a;--sp3:#6e7ea6;--sp4:#a56f7c;--sp5:#99935c;--sp-fg:#111214;
 }}
 :root[data-theme="light"]{
   color-scheme:light;
   --bg:#f5f5f3;--surface:#e8e8e5;--raise:#dddddb;--fg:#17181a;--muted:#5f5f63;--line:#c9c9c6;
-  --cta:#1b1c1f;--cta-fg:#f5f5f3;--done:#2f7551;--warn:#9a5d0c;
+  --cta:#2f7551;--cta-fg:#f5f5f3;--brand:#2f7551;--brand-soft:#dfece4;--wood:#a88b6c;--done:#2f7551;--warn:#9a5d0c;
   --sp1:#6f8d7d;--sp2:#b0805a;--sp3:#6e7ea6;--sp4:#a56f7c;--sp5:#99935c;--sp-fg:#111214;
 }
 *{box-sizing:border-box}
@@ -86,8 +86,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .q{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;min-height:52px}
 .q span{min-width:0;overflow-wrap:anywhere}
 .q small{display:block;color:var(--muted);font-size:14px}
-.shelf{display:flex;align-items:flex-end;gap:3px;min-height:150px;border-bottom:4px solid var(--line);overflow-x:auto;scrollbar-width:thin;padding-top:4px}
-.spine{flex:none;height:132px;border-radius:3px 3px 0 0;color:var(--sp-fg);writing-mode:vertical-rl;font:600 13px/1 var(--display);padding:8px 0;display:flex;align-items:center;overflow:hidden;white-space:nowrap}
+.shelf{display:flex;align-items:flex-end;gap:3px;min-height:150px;border-bottom:10px solid var(--wood);border-radius:0 0 3px 3px;box-shadow:0 8px 10px -6px rgba(0,0,0,.35);overflow-x:auto;scrollbar-width:thin;padding:4px 6px 0}
+.spine{flex:none;height:132px;border-radius:3px 3px 0 0;box-shadow:inset -3px 0 0 rgba(0,0,0,.14),inset 2px 0 0 rgba(255,255,255,.18);color:var(--sp-fg);writing-mode:vertical-rl;font:600 13px/1 var(--display);padding:8px 0;display:flex;align-items:center;overflow:hidden;white-space:nowrap}
 .spine:nth-child(3n+1){height:140px}.spine:nth-child(3n+2){height:124px}
 .ghost{flex:none;width:30px;height:128px;border:1.5px dashed var(--line);border-bottom:0;border-radius:3px 3px 0 0}
 .foot{color:var(--muted);font-size:13px}
@@ -117,7 +117,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .q .side{flex:none;color:var(--muted);font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
 .book.hc{flex-direction:row;gap:16px;align-items:flex-start}
 .bt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
-.cover{flex:none;width:84px;aspect-ratio:2/3;object-fit:cover;border-radius:4px;background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.cover{flex:none;width:112px;aspect-ratio:2/3;object-fit:cover;border-radius:4px 6px 6px 4px;background:var(--surface);box-shadow:0 10px 24px rgba(0,0,0,.35),inset 3px 0 0 rgba(255,255,255,.18)}
 .spine.cvsp{width:86px!important;background-size:cover!important;background-position:center!important;border-radius:3px 3px 0 0;font-size:0}
 .cvbox{display:flex;gap:14px;align-items:flex-start}
 .cvprev{flex:none;width:72px;aspect-ratio:2/3;border-radius:4px;border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--muted);font-size:12px;text-align:center;overflow:hidden;background:var(--surface)}
@@ -128,7 +128,29 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .cvres button{display:flex;flex-direction:column;gap:4px;text-align:left;font-size:12px;color:var(--muted);min-width:0}
 .cvres img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:4px;background:var(--surface)}
 .cvres span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.hero{position:relative;isolation:isolate;margin-inline:-16px;padding:18px 16px 20px;border-radius:0 0 20px 20px;overflow:hidden}
+.hero.hc{min-height:200px}
+.herobg{position:absolute;inset:-30px;z-index:-1;background-size:cover;background-position:center;filter:blur(28px) saturate(1.3);opacity:.45}
+.hero:not(.hc){background:linear-gradient(180deg,var(--brand-soft),transparent)}
+.top h1{display:flex;align-items:center;gap:10px}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--brand);display:grid;place-items:center;color:var(--cta-fg);flex:none}
+.bar i{background:var(--brand)}
+.task.on .ring{background:var(--brand);border-color:var(--brand)}
+.task.pop .ring{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+.task.pop .ring path{stroke-dasharray:16;stroke-dashoffset:16;animation:draw .35s .12s ease-out forwards}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.burst{position:fixed;pointer-events:none;z-index:30;width:8px;height:8px;border-radius:2px;animation:fly .8s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(260deg);opacity:0}}
+.install{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface)}
+.install p{margin:0;flex:1;min-width:0;font-size:15px}
+.install p small{display:block;color:var(--muted);font-size:13px}
+.install .btn2{background:var(--cta);color:var(--cta-fg);flex:none}
+.install .x{flex:none;width:36px;height:36px;color:var(--muted);font-size:20px}
+.ios{position:fixed;inset:auto 0 0 0;z-index:40;background:var(--surface);border-radius:20px 20px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+.ios ol{margin:10px 0 16px;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.ios h3{margin:0;font:700 20px/1.2 var(--body)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}.task.pop .ring,.task.pop .ring path,.burst{animation:none}.task.pop .ring path{stroke-dashoffset:0}}
 </style>
 
 <main class="wrap" id="root"><p class="note">Carregando sua estante...</p></main>
@@ -243,6 +265,7 @@ const CHECK='<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke=
 const DOT='<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
 const CHEV='<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>';
 const PLUS='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const GLASSES='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="14" r="3.6"/><circle cx="17" cy="14" r="3.6"/><path d="M10.6 13.2c.9-.8 1.9-.8 2.8 0M3.4 13 2 10.5M20.6 13 22 10.5"/></svg>';
 const pg=n=>n+(n===1?" página":" páginas");
 
 const S={books:[],ready:false,sel:null,day:null,editing:null,error:"",note:"",store:null,local:false};
@@ -333,7 +356,7 @@ function render(){
   if(!S.ready)return;
   const{open,done}=groups(today);
   let b=S.books.find(x=>x.id===S.sel)||open[0]||null;
-  const topbar='<div class="top"><h1>Livro da Semana</h1><button class="icon" data-act="new" aria-label="Adicionar livro">'+PLUS+"</button></div>";
+  const topbar='<div class="top"><h1><span class="mark" aria-hidden="true">'+GLASSES+'</span>Livro da Semana</h1><button class="icon" data-act="new" aria-label="Adicionar livro">'+PLUS+"</button></div>"+installHtml();
   if(!b){
     const lastDone=done[done.length-1];
     root.innerHTML=topbar+'<div class="book"><h2>'+(lastDone?"Qual é o próximo livro?":"Qual é o livro desta semana?")+'</h2><p class="note">Coloque o nome e o número de páginas. O app divide a leitura em 7 dias e ajusta a meta se você atrasar.</p></div>'+shelfHtml(done)+footHtml();
@@ -364,7 +387,7 @@ function render(){
       :d.status==="missed"?"Dia sem leitura registrada. Marque se você leu."
       :d.status==="future"?pg(d.pages)+" previstas. Se já leu, pode marcar."
       :pg(d.pages)+(p.notStarted?" no primeiro dia":" hoje");
-    task='<button class="task '+(on?"on":"")+(part?" part":"")+'" data-act="tick" '+(canLog?"":"disabled")+' aria-pressed="'+on+'"><span class="ring">'+(on?CHECK:"")+"</span><span><strong>pp. "+d.from+"–"+d.to+"</strong><small>"+sub+"</small></span></button>";
+    task='<button class="task '+(on?"on":"")+(on&&S.pop===d.date?" pop":"")+(part?" part":"")+'" data-act="tick" '+(canLog?"":"disabled")+' aria-pressed="'+on+'"><span class="ring">'+(on?CHECK:"")+"</span><span><strong>pp. "+d.from+"–"+d.to+"</strong><small>"+sub+"</small></span></button>";
     if(canLog)task+='<form class="stop" id="stopForm"><label for="stopPage">Parei em outra página</label><input class="num" id="stopPage" type="number" inputmode="numeric" min="'+d.from+'" max="'+p.last+'" placeholder="'+(d.logged||d.to)+'"><button class="btn2" type="submit">Salvar</button></form>';
     if(S.error)task+='<p class="err">'+esc(S.error)+"</p>";
   }
@@ -376,10 +399,11 @@ function render(){
   const queue=others.length?'<section class="sec"><h4>Próximos livros</h4>'+others.map(x=>{const q=buildPlan(x,today);return'<button class="q" data-act="open" data-id="'+esc(x.id)+'"><span>'+esc(x.title)+"<small>"+longLabel(x.startDate)+", "+q.perDay+" págs. por dia</small></span>"+CHEV+"</button>"}).join("")+"</section>":"";
 
   root.innerHTML=topbar
+   +'<div class="hero'+(b.cover?" hc":"")+'">'+(b.cover?'<div class="herobg" style="background-image:url(\''+esc(b.cover)+'\')"></div>':"")
    +'<div class="book'+(b.cover?" hc":"")+'">'+(b.cover?'<img class="cover" alt="" src="'+esc(b.cover)+'">':"")+'<div class="bt"><h2>'+esc(b.title)+'</h2><div class="meta">'
    +(b.author?"<span>"+esc(b.author)+"</span>":"")+"<span>"+p.total+" páginas</span><span>"+(p.finished?"Lido em "+longLabel(p.finishDate):dayLabel(p.dates[0])+" a "+longLabel(p.dates[p.n-1]))+"</span>"
    +(b.example?'<span class="chip">Exemplo</span>':"")+'<button class="link" data-act="edit">Editar</button></div>'
-   +(b.example?'<p class="note">Este livro é só um exemplo. Ele some quando você adicionar o seu primeiro livro.</p>':"")+"</div></div>"
+   +(b.example?'<p class="note">Este livro é só um exemplo. Ele some quando você adicionar o seu primeiro livro.</p>':"")+"</div></div></div>"
    +(b.manual?rate:'<div class="strip" id="strip">'+tiles+"</div>"
    +'<div class="head"><h3>Dia '+(d.index+1)+" de "+p.n+'</h3><span class="pill '+pc+'">'+pt+"</span></div>"
    +(advice?'<p class="note'+(p.todayPages>p.perDay?" warn":"")+'">'+advice+"</p>":"")
@@ -396,6 +420,24 @@ function render(){
   else if(d.status==="free"){cta.textContent="Voltar para hoje";cta.dataset.act="home";cta.className="soft"}
   else if(d.status==="done"){cta.textContent="Desfazer esta leitura";cta.dataset.act="tick";cta.className="soft"}
   else{cta.textContent="Li até a página "+d.to;cta.dataset.act="tick"}
+}
+let deferredInstall=null;
+const standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const hideInstall=()=>{try{return localStorage.getItem("livro-install-hide")==="1"}catch(e){return false}};
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;render()});
+addEventListener("appinstalled",()=>{deferredInstall=null;render()});
+function installHtml(){
+  if(standalone()||hideInstall()||!(deferredInstall||isIOS()))return"";
+  return'<div class="install"><span class="mark" aria-hidden="true">'+GLASSES+'</span><p>Instale o app<small>Abre direto da tela inicial e funciona sem internet.</small></p><button class="btn2" type="button" data-act="install">Instalar</button><button class="x" type="button" data-act="installhide" aria-label="Fechar aviso">×</button></div>';
+}
+function burst(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const r=document.querySelector(".task.pop .ring");if(!r)return;
+  const b=r.getBoundingClientRect(),cols=["var(--brand)","var(--warn)","var(--sp3)","var(--sp4)","var(--sp5)"];
+  for(let i=0;i<14;i++){const s=document.createElement("i");s.className="burst";const a=Math.PI*2*i/14;
+    s.style.cssText="left:"+(b.left+b.width/2-4)+"px;top:"+(b.top+b.height/2-4)+"px;background:"+cols[i%5]+";--dx:"+Math.round(Math.cos(a)*(40+Math.random()*30))+"px;--dy:"+Math.round(Math.sin(a)*(40+Math.random()*30))+"px";
+    document.body.appendChild(s);setTimeout(()=>s.remove(),900)}
 }
 function footHtml(){
   const t=S.note||(S.local?"Seus livros ficam salvos só neste aparelho.":"Salvo na sua conta.");
@@ -422,6 +464,14 @@ document.addEventListener("click",e=>{
   else if(a==="day"){S.day=t.dataset.date;render()}
   else if(a==="home"){S.day=null;render()}
   else if(a==="open"){S.sel=t.dataset.id;S.day=null;render();scrollTo(0,0)}
+  else if(a==="install"){
+    if(deferredInstall){deferredInstall.prompt();deferredInstall.userChoice.finally(()=>{deferredInstall=null;render()})}
+    else if(isIOS()){const s=document.createElement("div");s.className="ios";s.setAttribute("role","dialog");s.setAttribute("aria-label","Como instalar");
+      s.innerHTML='<h3>Instalar no iPhone ou iPad</h3><ol><li>Abra este site no <b>Safari</b>.</li><li>Toque em <b>Compartilhar</b>, o quadrado com a seta para cima.</li><li>Toque em <b>Adicionar à Tela de Início</b>.</li><li>Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.</li></ol><button class="primary" type="button" data-act="iosclose" style="width:100%">Entendi</button>';
+      document.body.appendChild(s)}
+  }
+  else if(a==="iosclose"){t.closest(".ios").remove()}
+  else if(a==="installhide"){try{localStorage.setItem("livro-install-hide","1")}catch(err){}render()}
   else if(a==="bkcopy"){
     const txt=JSON.stringify({app:"livro-da-semana",v:1,books:S.books}),ta=$("bkText"),msg=$("bkMsg");ta.value=txt;
     const man=()=>{ta.focus();ta.select();msg.textContent="Texto selecionado. Toque e segure para copiar."};
@@ -439,7 +489,7 @@ document.addEventListener("click",e=>{
     const p=buildPlan(b,today),d=p.days[p.dates.indexOf(S.day)];
     if(d.status==="ahead")return;
     if(d.status==="done")setLog(b,d.date,null);
-    else logDay(b,p,d,d.to);
+    else{S.pop=d.date;logDay(b,p,d,d.to);S.pop=null;burst()}
   }
 });
 document.addEventListener("change",e=>{
