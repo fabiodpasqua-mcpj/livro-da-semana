@@ -421,6 +421,11 @@ function render(){
   else if(d.status==="done"){cta.textContent="Desfazer esta leitura";cta.dataset.act="tick";cta.className="soft"}
   else{cta.textContent="Li até a página "+d.to;cta.dataset.act="tick"}
 }
+const themeNow=()=>{try{return localStorage.getItem("livro-tema")||"auto"}catch(e){return"auto"}};
+function setTheme(v){try{localStorage.setItem("livro-tema",v)}catch(e){}applyTheme()}
+function applyTheme(){const v=themeNow(),r=document.documentElement;if(v==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",v);
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(document.body).backgroundColor}
+applyTheme();matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
 let deferredInstall=null;
 const standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
@@ -428,7 +433,7 @@ const hideInstall=()=>{try{return localStorage.getItem("livro-install-hide")==="
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;render()});
 addEventListener("appinstalled",()=>{deferredInstall=null;render()});
 function installHtml(){
-  if(standalone()||hideInstall()||!(deferredInstall||isIOS()))return"";
+  if(standalone()||hideInstall())return"";
   return'<div class="install"><span class="mark" aria-hidden="true">'+GLASSES+'</span><p>Instale o app<small>Abre direto da tela inicial e funciona sem internet.</small></p><button class="btn2" type="button" data-act="install">Instalar</button><button class="x" type="button" data-act="installhide" aria-label="Fechar aviso">×</button></div>';
 }
 function burst(){
@@ -444,7 +449,8 @@ function footHtml(){
   return'<section class="sec"><h4>Backup</h4><p class="note">Copie o backup de vez em quando e guarde numa nota. Ele também serve para passar seus livros para outro aparelho: copie num, cole no outro e toque em Restaurar.</p>'
    +'<div class="cvbtns" style="flex-direction:row;flex-wrap:wrap"><button class="btn2" type="button" data-act="bkcopy">Copiar backup</button><button class="btn2" type="button" data-act="bkrestore">Restaurar</button></div>'
    +'<textarea id="bkText" rows="3" aria-label="Texto do backup" placeholder="Cole aqui o backup para restaurar" style="width:100%;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:10px 12px;font:13px/1.4 ui-monospace,monospace;color:inherit"></textarea>'
-   +'<p class="note" id="bkMsg" aria-live="polite">'+esc(S.bkMsg||"")+'</p></section><p class="foot">'+esc(t)+"</p>";
+   +'<p class="note" id="bkMsg" aria-live="polite">'+esc(S.bkMsg||"")+'</p></section>'
+   +'<section class="sec"><h4>Aparência</h4><div class="years" role="group" aria-label="Tema">'+[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([v,l])=>'<button class="year" type="button" data-act="theme" data-v="'+v+'" aria-pressed="'+(themeNow()===v)+'">'+l+"</button>").join("")+'</div><p class="note">Automático segue o tema do aparelho.</p></section><p class="foot">'+esc(t)+"</p>";
 }
 
 function currentBook(){return S.books.find(x=>x.id===S.sel)}
@@ -469,9 +475,13 @@ document.addEventListener("click",e=>{
     else if(isIOS()){const s=document.createElement("div");s.className="ios";s.setAttribute("role","dialog");s.setAttribute("aria-label","Como instalar");
       s.innerHTML='<h3>Instalar no iPhone ou iPad</h3><ol><li>Abra este site no <b>Safari</b>.</li><li>Toque em <b>Compartilhar</b>, o quadrado com a seta para cima.</li><li>Toque em <b>Adicionar à Tela de Início</b>.</li><li>Deixe <b>Abrir como App Web</b> ligado e toque em <b>Adicionar</b>.</li></ol><button class="primary" type="button" data-act="iosclose" style="width:100%">Entendi</button>';
       document.body.appendChild(s)}
+    else{const s=document.createElement("div");s.className="ios";s.setAttribute("role","dialog");s.setAttribute("aria-label","Como instalar");
+      s.innerHTML='<h3>Instalar no Android</h3><ol><li>Abra este site no <b>Chrome</b>.</li><li>Toque nos <b>três pontinhos</b>, no canto de cima.</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme em <b>Instalar</b>. O ícone dos óculos aparece na tela.</li></ol><p class="note" style="margin:0 0 16px">Se a opção não aparecer, feche o Chrome, abra o site de novo e espere alguns segundos.</p><button class="primary" type="button" data-act="iosclose" style="width:100%">Entendi</button>';
+      document.body.appendChild(s)}
   }
   else if(a==="iosclose"){t.closest(".ios").remove()}
   else if(a==="installhide"){try{localStorage.setItem("livro-install-hide","1")}catch(err){}render()}
+  else if(a==="theme"){setTheme(t.dataset.v);render()}
   else if(a==="bkcopy"){
     const txt=JSON.stringify({app:"livro-da-semana",v:1,books:S.books}),ta=$("bkText"),msg=$("bkMsg");ta.value=txt;
     const man=()=>{ta.focus();ta.select();msg.textContent="Texto selecionado. Toque e segure para copiar."};
